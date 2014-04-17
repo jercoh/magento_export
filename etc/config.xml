@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<config>
+
+    <modules>
+        <Beautyst_Exporter>
+            <version>1.0.0</version>
+        </Beautyst_Exporter>
+    </modules>
+
+    <global>
+        <helpers>
+            <exporter>
+                <class>Beautyst_Exporter_Helper</class>
+            </exporter>
+        </helpers>
+        <blocks>
+            <exporter>
+                <class>Beautyst_Exporter_Block</class>
+            </exporter>
+        </blocks>          
+    </global>
+    
+    <frontend>
+         <routers>
+             <beautyst_exporter>
+                 <use>standard</use>
+                 <args>
+                     <module>Beautyst_Exporter</module>
+                     <frontName>exporter</frontName>
+                 </args>
+             </beautyst_exporter>
+         </routers>
+     </frontend>    
+    
+</config>
