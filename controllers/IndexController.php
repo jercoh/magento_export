@@ -125,24 +125,56 @@ class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Actio
         }
     }
 
-    public function orderedAction() {
-        //only for products so no params required
-        //format: json/csv
+    // public function orderedAction() {
+    //     //only for products so no params required
+    //     //format: json/csv
 
+    //     set_time_limit(0);
+    //     ini_set('memory_limit', '4096M');
+    //     $helper = Mage::helper("exporter");
+
+    //     $format = (isset($_GET["format"]) && $_GET["format"] != "") ? $_GET["format"] : "csv";
+    //     $type = "produits";
+    //     $forcegen = (isset($_GET["forcegen"]) && $_GET["forcegen"] == "true");
+
+    //     if ($format == "csv" || $format == "json") {
+    //         echo $this->get_content("ordered", $type, $format, $forcegen);
+    //         die;
+    //     } else {
+    //         die("Erreur...");
+    //     }
+    // }
+
+    public function orderedAction() {
         set_time_limit(0);
         ini_set('memory_limit', '4096M');
-        $helper = Mage::helper("exporter");
 
-        $format = (isset($_GET["format"]) && $_GET["format"] != "") ? $_GET["format"] : "csv";
-        $type = "produits";
-        $forcegen = (isset($_GET["forcegen"]) && $_GET["forcegen"] == "true");
-
-        if ($format == "csv" || $format == "json") {
-            echo $this->get_content("ordered", $type, $format, $forcegen);
-            die;
-        } else {
-            die("Erreur...");
+        //GET params
+        $forcegeneration = 0;
+        if (isset($_GET["forcegen"]) && $_GET["forcegen"] == "true") {
+            $forcegeneration = 1;
         }
-    }
+        $format = (isset($_GET["format"]) && $_GET["format"] != "") ? $_GET["format"] : "csv";
+        //File path
+        $path = Mage::getBaseDir('media') . DS . 'export' . DS;
+        $file = $path . DS . 'orders.'+$format;
 
+        //Cache
+        if ((file_exists($file) && (time() - filemtime($file)) < (60 * 60 * 24)) && !$forcegeneration) {
+            error_log("Orders export -> cache file served");
+            $content = array(
+                'type' => 'filename',
+                'value' => $file,
+                'rm' => false //keep as cache (if necessary)
+            );
+        } else {
+            error_log("Lengow export -> creating new file for export");
+            if (file_exists($file))
+                unlink($file);
+            $content = Mage::helper('exporter')->exportOrdered($format);
+        }
+
+        $filename = 'orders.'+$format;
+        $this->_prepareDownloadResponse($filename, $content);
+    }
 }

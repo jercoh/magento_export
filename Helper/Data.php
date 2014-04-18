@@ -12,7 +12,7 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         //
     }
 
-    public function initLengowExport() {
+    public function initProductExport() {
         $idTB = Mage::helper("importxml")->getConf(Beautyst_ImportXml_Model_Config::XML_PATH_TB_PROVIDER_ID);
         $collection = Mage::getModel('catalog/product')->getCollection()
                 ->addAttributeToSelect('*')
@@ -38,14 +38,12 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
      */
     public function generateCsvList() {
         //Init
-        $this->initLengowExport();
+        $this->initProductExport();
 
         //Fields
         $fields = array(
             "ID" => "id",
             "SKU" => "sku",
-            "ID_MERE" => "id",
-            "WEIGHT" => "weight",
             "MANUFACTURER" => "manufacturer", //brand
             "NAME" => "name",
             "DESCRIPTION" => "description",
@@ -55,10 +53,8 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
             "PROMO_FROM" => "special_from_date",
             "PROMO_TO" => "special_to_date",
             "STOCK" => "is_in_stock",
-            "QUANTITY" => "qty",
             "URL" => "", //base + url_path
             "IMAGE" => "image", // base + image
-            "FDP" => "",
             "CATEGORY" => "",
             "ATT_CAPACITY" => "capacity",
             "ATT_EAN" => "ean",
@@ -75,7 +71,7 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
 
                 $io = new Varien_Io_File();
                 $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-                $file = $path . DS . 'lengow.csv';
+                $file = $path . DS . 'product_list.csv';
 
                 //File creation
                 $io->setAllowCreateFolders(true);
@@ -109,16 +105,8 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
                         //Special cases first (manufacturer, stock/qty, url, image, FDP...)
                         if ($column == "MANUFACTURER")
                             $lineCsv[] = $product->getAttributeText('brand_id');
-                        else if ($column == "ID" || $column == "ID_MERE")
-                            $lineCsv[] = $product->getId();
-                        else if ($column == "STOCK")
-                            $lineCsv[] = $stock->getData("is_in_stock");
-                        else if ($column == "QUANTITY")
-                            $lineCsv[] = $stock->getQty();
                         else if ($column == "CATEGORY")
                             $lineCsv[] = implode(", ", $strCats);
-                        else if ($column == "FDP")
-                            $lineCsv[] = "voir plus";
                         else if ($column == "ATT_CAPACITY")
                             $lineCsv[] = $product->getAttributeText('capacity');
                         else if ($column == "ATT_PROVIDER")
@@ -272,6 +260,16 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     function exportOrdered($format = "csv") {
+        // File Creation///////
+        $io = new Varien_Io_File();
+        $path = Mage::getBaseDir('media') . DS . 'export' . DS;
+        $file = $path . DS . 'orders.'+$format;
+
+        $io->setAllowCreateFolders(true);
+        $io->open(array('path' => $path));
+        $io->streamOpen($file, 'w+');
+        $io->streamLock(true);
+        ///////////////////////
 
         $collection = Mage::getModel('customer/customer')
                 ->getCollection()
@@ -343,9 +341,9 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         }
 
         if ($format == "csv") {
-            return $csvTxt;
+            $io->streamWrite($csvTxt);
         }else if ($format == "json" && !empty($jsonTab)) {
-            return json_encode($jsonTab);
+            $io->streamWrite(json_encode($jsonTab));
         }
     }
 
