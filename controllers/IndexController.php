@@ -157,7 +157,7 @@ class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Actio
         $format = (isset($_GET["format"]) && $_GET["format"] != "") ? $_GET["format"] : "csv";
         //File path
         $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . 'orders.'+$format;
+        $file = $path . DS . 'orders.'.$format;
 
         //Cache
         if ((file_exists($file) && (time() - filemtime($file)) < (60 * 60 * 24)) && !$forcegeneration) {
@@ -174,7 +174,7 @@ class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Actio
             $content = Mage::helper('exporter')->exportOrdered($format);
         }
 
-        $filename = 'orders.'+$format;
+        $filename = 'orders.'.$format;
         $this->_prepareDownloadResponse($filename, $content);
     }
 }

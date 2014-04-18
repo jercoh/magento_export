@@ -263,7 +263,7 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         // File Creation///////
         $io = new Varien_Io_File();
         $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . 'orders.'+$format;
+        $file = $path . DS . 'orders.'.$format;
 
         $io->setAllowCreateFolders(true);
         $io->open(array('path' => $path));
