@@ -344,24 +344,24 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     function create_file($name, $format) {
-        $this->$_io = new Varien_Io_File();
+        $this->_io = new Varien_Io_File();
         $path = Mage::getBaseDir('media') . DS . 'export' . DS;
         $file = $path . DS . $name.'.'.$format;
 
-        $this->$_io->setAllowCreateFolders(true);
-        $this->$_io->open(array('path' => $path));
-        $this->$_io->streamOpen($file, 'w+');
-        $this->$_io->streamLock(true);
+        $this->_io->setAllowCreateFolders(true);
+        $this->_io->open(array('path' => $path));
+        $this->_io->streamOpen($file, 'w+');
+        $this->_io->streamLock(true);
         return $file;
     }
 
     function save_file($file, $content, $format) {
-        if(!$this->$_io) {
+        if(!$this->_io) {
             if ($format == "csv") {
-                $this->$_io->streamWrite($content);
+                $this->_io->streamWrite($content);
             }
             else if ($format == "json") {
-                $this->$_io->streamWrite(json_encode($content));
+                $this->_io->streamWrite(json_encode($content));
             }
             return array(
                 'type' => 'filename',
