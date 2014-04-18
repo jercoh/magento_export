@@ -139,6 +139,36 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         }
     }
 
+    function create_file($name, $format) {
+        $io = new Varien_Io_File();
+        $path = Mage::getBaseDir('media') . DS . 'export' . DS;
+        $file = $path . DS . $name.'.'.$format;
+
+        $io->setAllowCreateFolders(true);
+        $io->open(array('path' => $path));
+        $io->streamOpen($file, 'w+');
+        $io->streamLock(true);
+        return array(
+            "stream" => $io,
+            "file" => $file
+        );
+    }
+
+    function save_file($io, $file, $content, $format) {
+        if ($format == "csv") {
+            $io->streamWrite($content);
+        }
+        else if ($format == "json") {
+            $io->streamWrite(json_encode($content));
+        }
+        return array(
+            'type' => 'filename',
+            'value' => $file,
+            'rm' => false //keep as cache (if necessary)
+        );
+    }
+    }
+
     function get_query($query) {
         $resource = Mage::getSingleton('core/resource');
         $readConnection = $resource->getConnection('core_read');
@@ -261,18 +291,14 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
 
     function exportOrdered($format = "csv") {
         // File Creation///////
-        $io = new Varien_Io_File();
-        $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . 'orders.'.$format;
-
-        $io->setAllowCreateFolders(true);
-        $io->open(array('path' => $path));
-        $io->streamOpen($file, 'w+');
-        $io->streamLock(true);
+        $create_file = $this->create_file("orders", $format)["stream"];
+        $io = $create_file["stream"];
+        $file = $create_file["file"];
         ///////////////////////
 
         $collection = Mage::getModel('customer/customer')
                 ->getCollection()
+                ->setPage(1,4)
                 ->addAttributeToSelect('*');
 
         $jsonTab = array();
@@ -341,15 +367,11 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         }
 
         if ($format == "csv") {
-            $io->streamWrite($csvTxt);
-        }else if ($format == "json" && !empty($jsonTab)) {
-            $io->streamWrite(json_encode($jsonTab));
+            return $this->save_file($io, $file, $csvTxt, $format);
         }
-        return array(
-            'type' => 'filename',
-            'value' => $file,
-            'rm' => false //keep as cache (if necessary)
-        );
+        else if ($format == "json" && !empty($jsonTab)) {
+            return $this->save_file($io, $file, $jsonTab, $format);
+        }
     }
 
 }
