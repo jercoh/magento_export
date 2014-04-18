@@ -7,6 +7,7 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
      * @var string
      */
     protected $_list = null;
+    protected $_io = null;
 
     public function __construct() {
         //
@@ -139,35 +140,6 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         }
     }
 
-    function create_file($name, $format) {
-        $io = new Varien_Io_File();
-        $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . $name.'.'.$format;
-
-        $io->setAllowCreateFolders(true);
-        $io->open(array('path' => $path));
-        $io->streamOpen($file, 'w+');
-        $io->streamLock(true);
-        return array(
-            "stream" => $io,
-            "file" => $file
-        );
-    }
-
-    function save_file($io, $file, $content, $format) {
-        if ($format == "csv") {
-            $io->streamWrite($content);
-        }
-        else if ($format == "json") {
-            $io->streamWrite(json_encode($content));
-        }
-        return array(
-            'type' => 'filename',
-            'value' => $file,
-            'rm' => false //keep as cache (if necessary)
-        );
-    }
-
     function get_query($query) {
         $resource = Mage::getSingleton('core/resource');
         $readConnection = $resource->getConnection('core_read');
@@ -290,9 +262,7 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
 
     function exportOrdered($format = "csv") {
         // File Creation///////
-        $create_file = $this->create_file("orders", $format)["stream"];
-        $io = $create_file["stream"];
-        $file = $create_file["file"];
+        $file = $this->create_file("orders", $format);
         ///////////////////////
 
         $collection = Mage::getModel('customer/customer')
@@ -366,10 +336,39 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         }
 
         if ($format == "csv") {
-            return $this->save_file($io, $file, $csvTxt, $format);
+            return $this->save_file($file, $csvTxt, $format);
         }
         else if ($format == "json" && !empty($jsonTab)) {
-            return $this->save_file($io, $file, $jsonTab, $format);
+            return $this->save_file($file, $jsonTab, $format);
         }
     }
+
+    function create_file($name, $format) {
+        $this->$_io = new Varien_Io_File();
+        $path = Mage::getBaseDir('media') . DS . 'export' . DS;
+        $file = $path . DS . $name.'.'.$format;
+
+        $this->$_io->setAllowCreateFolders(true);
+        $this->$_io->open(array('path' => $path));
+        $this->$_io->streamOpen($file, 'w+');
+        $this->$_io->streamLock(true);
+        return $file;
+    }
+
+    function save_file($file, $content, $format) {
+        if(!$this->$_io) {
+            if ($format == "csv") {
+                $this->$_io->streamWrite($content);
+            }
+            else if ($format == "json") {
+                $this->$_io->streamWrite(json_encode($content));
+            }
+            return array(
+                'type' => 'filename',
+                'value' => $file,
+                'rm' => false //keep as cache (if necessary)
+            );
+        }
+    }
+
 }
