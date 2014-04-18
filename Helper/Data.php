@@ -345,6 +345,11 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         }else if ($format == "json" && !empty($jsonTab)) {
             $io->streamWrite(json_encode($jsonTab));
         }
+        return array(
+            'type' => 'filename',
+            'value' => $file,
+            'rm' => false //keep as cache (if necessary)
+        );
     }
 
 }
