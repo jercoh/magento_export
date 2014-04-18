@@ -267,7 +267,7 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
 
         $collection = Mage::getModel('customer/customer')
                 ->getCollection()
-                ->setPage(1,4)
+                ->setPage(1,20)
                 ->addAttributeToSelect('*');
 
         $jsonTab = array();
@@ -356,7 +356,7 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
     }
 
     function save_file($file, $content, $format) {
-        if(!$this->_io) {
+        if($this->_io) {
             if ($format == "csv") {
                 $this->_io->streamWrite($content);
             }
