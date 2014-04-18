@@ -167,7 +167,6 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
             'rm' => false //keep as cache (if necessary)
         );
     }
-    }
 
     function get_query($query) {
         $resource = Mage::getSingleton('core/resource');
@@ -373,5 +372,4 @@ class Beautyst_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
             return $this->save_file($io, $file, $jsonTab, $format);
         }
     }
-
 }
