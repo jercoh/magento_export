@@ -14,7 +14,7 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
 
         //File path
         $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . 'Datarec.csv';
+        $file = $path . DS . 'datarec_products.json';
 
         //Cache
         if ((file_exists($file) && (time() - filemtime($file)) < (60 * 60 * 24)) && !$forcegeneration) {
@@ -28,10 +28,10 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
             error_log("Datarec export -> creating new file for export");
             if (file_exists($file))
                 unlink($file);
-            $content = Mage::getModel('datarec_exporter/resource')->generateCsvList();
+            $content = Mage::getModel('datarec_exporter/resource')->exportProducts();
         }
 
-        $filename = "Datarec.csv";
+        $filename = "datarec_products.json";
         $this->_prepareDownloadResponse($filename, $content);
     }
 
@@ -134,10 +134,9 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
         if (isset($_GET["forcegen"]) && $_GET["forcegen"] == "true") {
             $forcegeneration = 1;
         }
-        $format = (isset($_GET["format"]) && $_GET["format"] != "") ? $_GET["format"] : "csv";
         //File path
         $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . 'orders.'.$format;
+        $file = $path . DS . 'datarec_orders.json';
 
         //Cache
         if ((file_exists($file) && (time() - filemtime($file)) < (60 * 60 * 24)) && !$forcegeneration) {
@@ -151,10 +150,10 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
             error_log("Datarec export -> creating new file for export");
             if (file_exists($file))
                 unlink($file);
-            $content = Mage::getModel('datarec_exporter/resource')->exportOrdered($format);
+            $content = Mage::getModel('datarec_exporter/resource')->exportOrdered();
         }
 
-        $filename = 'orders.'.$format;
+        $filename = 'datarec_orders.json';
         $this->_prepareDownloadResponse($filename, $content);
     }
 }

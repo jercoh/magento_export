@@ -36,4 +36,10 @@ class Datarec_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         }
     }
 
+    function get_query($query) {
+        $resource = Mage::getSingleton('core/resource');
+        $readConnection = $resource->getConnection('core_read');
+        return $readConnection->fetchAll($query);
+    }
+
 }

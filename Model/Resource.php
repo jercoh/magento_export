@@ -13,14 +13,9 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
     }
 
     public function initProductExport() {
-        $idTB = Mage::helper("importxml")->getConf(Beautyst_ImportXml_Model_Config::XML_PATH_TB_PROVIDER_ID);
         $collection = Mage::getModel('catalog/product')->getCollection()
                 ->addAttributeToSelect('*')
                 ->addFieldToFilter('status', 1);
-        $collection->addFieldToFilter(array(
-            array('attribute' => 'provider', 'eq' => $idTB),
-        ));
-
         $this->setList($collection);
     }
 
@@ -36,55 +31,41 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
      * Generates CSV file with product's list according to the collection in the $this->_list
      * @return array
      */
-    public function generateCsvList() {
+    public function exportProducts() {
         //Init
         $this->initProductExport();
 
         //Fields
         $fields = array(
-            "ID" => "id",
-            "SKU" => "sku",
-            "MANUFACTURER" => "manufacturer", //brand
-            "NAME" => "name",
-            "DESCRIPTION" => "description",
-            "SHORT_DESCRIPTION" => "short_description",
-            "PRICE" => "price",
-            "PRICE_PROMO" => "special_price",
-            "PROMO_FROM" => "special_from_date",
-            "PROMO_TO" => "special_to_date",
-            "STOCK" => "is_in_stock",
-            "URL" => "", //base + url_path
-            "IMAGE" => "image", // base + image
-            "CATEGORY" => "",
-            "ATT_CAPACITY" => "capacity",
-            "ATT_EAN" => "ean",
-            "ATT_PROVIDER" => "provider",
-            "ATT_SHADE" => "shade",
-            "ATT_SHADE_IMAGE" => "shade_image"//Avec url magento devant
+            "id",
+            "sku",
+            "manufacturer", //brand
+            "name",
+            "description",
+            "short_description",
+            "price",
+            "is_in_stock",
+            "url", //base + url_path
+            "image", // base + image
+            "category",
+            "capacity",
+            "ean",
+            "provider",
+            "shade",
+            "shade_image"//Avec url magento devant
         );
-
-        $idBrands = Mage::getStoreConfig(Beautyst_Catalog_Model_Category::XML_PATH_BRAND_CATEGORY_ID);
 
         if (!is_null($this->_list)) {
             $items = $this->_list->getItems();
             if (count($items) > 0) {
 
-                $io = new Varien_Io_File();
-                $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-                $file = $path . DS . 'product_list.csv';
+                $file = Mage::helper("datarec_exporter/data")->create_file("datarec_products", 'json');
 
-                //File creation
-                $io->setAllowCreateFolders(true);
-                $io->open(array('path' => $path));
-                $io->streamOpen($file, 'w+');
-                $io->streamLock(true);
-
-                //HEADER
-                //$io->streamWriteCsv($this->_getCsvHeaders($items));
-                $io->streamWrite(implode("|", array_keys($fields)) . "\n");
                 //CONTENT
+                $jsonTab = array();
+
                 foreach ($items as $product) {
-                    $lineCsv = array();
+                    $productJson = array();
                     $stock = Mage::getModel('cataloginventory/stock_item')->loadByProduct($product);
                     $strCats = array();
                     $currentCatIds = $product->getCategoryIds();
@@ -96,53 +77,42 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                                 ->addIsActiveFilter();
 
                         foreach ($categoryCollection as $cat) {
-                            if ($cat->getLevel() > 1 && $cat->getLevel() < 5 && $cat->getId() != $idBrands && $cat->getParentId() != $idBrands)
+                            if ($cat->getLevel() > 1 && $cat->getLevel() < 5 )
                                 $strCats[] = htmlentities($cat->getName());
                         }
                     }
 
-                    foreach ($fields as $column => $attr) {
+                    foreach ($fields as $attr) {
                         //Special cases first (manufacturer, stock/qty, url, image, FDP...)
-                        if ($column == "MANUFACTURER")
-                            $lineCsv[] = $product->getAttributeText('brand_id');
-                        else if ($column == "CATEGORY")
-                            $lineCsv[] = implode(", ", $strCats);
-                        else if ($column == "ATT_CAPACITY")
-                            $lineCsv[] = $product->getAttributeText('capacity');
-                        else if ($column == "ATT_PROVIDER")
-                            $lineCsv[] = $product->getAttributeText('provider');
-                        else if ($column == "ATT_SHADE")
-                            if ($product->getAttributeText('shade') != "")
-                                $lineCsv[] = htmlentities($product->getAttributeText('shade'));
+                        if ($attr == "manufacturer")
+                            $productJson[$attr] = $product->getAttributeText('brand_id');
+                        else if ($attr == "category")
+                            $productJson[$attr] = implode(", ", $strCats);
+                        else if ($attr == "id")
+                            $productJson[$attr] = $product->getId();
+                        else if ($attr == "capacity" || $attr == "provider")
+                            $productJson[$attr] = $product->getAttributeText($attr);
+                        else if ($attr == "shade")
+                            if ($product->getAttributeText($attr) != "")
+                                $productJson[$attr] = htmlentities($product->getAttributeText($attr));
                             else
-                                $lineCsv[] = "non";
-                        else if (($column == "ATT_SHADE_IMAGE" || $column == "IMAGE"))
+                                $productJson[$attr] = "non";
+                        else if ($attr == "image" || $attr == "shade_image")
                             if ("no_selection" !== (string) $product->getData($attr))
-                                $lineCsv[] = Mage::getModel('catalog/product_media_config')->getMediaUrl($product->getData($attr));
+                                $productJson[$attr] = Mage::getModel('catalog/product_media_config')->getMediaUrl($product->getData($attr));
                             else
-                                $lineCsv[] = "non";
-                        else if ($column == "URL")
-                            $lineCsv[] = Mage::getBaseUrl() . $product->getUrlPath();
+                                $productJson[$attr] = "non";
+                        else if ($attr == "url")
+                            $productJson[$attr] = $product->getProductUrl();
                         else
-                            $lineCsv[] = preg_replace('/\r\n/', ' ', str_replace("|", "", trim(htmlentities(strip_tags($product->getData($attr))))));
+                            $productJson[$attr] = preg_replace('/\r\n/', ' ', str_replace("|", "", trim(htmlentities(strip_tags($product->getData($attr))))));
                     }
 
-                    $io->streamWrite(implode("|", $lineCsv) . "\n");
+                    $jsonTab[] = $productJson;
                 }
-
-                return array(
-                    'type' => 'filename',
-                    'value' => $file,
-                    'rm' => false //keep as cache (if necessary)
-                );
+                return Mage::helper("datarec_exporter/data")->save_file($file, $jsonTab, 'json');
             }
         }
-    }
-
-    function get_query($query) {
-        $resource = Mage::getSingleton('core/resource');
-        $readConnection = $resource->getConnection('core_read');
-        return $readConnection->fetchAll($query);
     }
 
     function exportLiked($type, $format = "csv") {
@@ -152,7 +122,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         if ($type == "")
             die("Spécifier un type de produits");
 
-        $tabusers = $this->get_query('select ID, user_email from wp_users where 1;');
+        $tabusers = Mage::helper("datarec_exporter/data")->get_query('select ID, user_email from wp_users where 1;');
 
         $jsonTab = array();
         $csvTxt = "";
@@ -164,7 +134,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
             else
                 $query = 'SELECT w.ID as postid from `clrz_likes` c INNER JOIN wp_posts w ON (c.post_id = w.ID) WHERE w.post_type = "' . $type . '" AND c.user_id = "' . $user["ID"] . '" AND w.post_status="publish";';
 
-            $tablikes = $this->get_query($query);
+            $tablikes = Mage::helper("datarec_exporter/data")->get_query($query);
 
             if (!empty($tablikes)) {
                 $list = array();
@@ -221,7 +191,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         foreach ($collection as $customer) {
 
             $query = 'SELECT distinct(product_id)  FROM `report_viewed_product_index` WHERE `customer_id` = "' . $customer->getId() . '";';
-            $tabViews = $this->get_query($query);
+            $tabViews = Mage::helper("datarec_exporter/data")->get_query($query);
             $list = array();
 
             foreach ($tabViews as $view) {
@@ -259,9 +229,9 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         }
     }
 
-    function exportOrdered($format = "csv") {
+    function exportOrdered() {
         // File Creation///////
-        $file = Mage::helper("datarec_exporter/data")->create_file("orders", $format);
+        $file = Mage::helper("datarec_exporter/data")->create_file("orders", 'json');
         ///////////////////////
 
         $collection = Mage::getModel('customer/customer')
@@ -269,8 +239,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                 ->setPage(1,4)
                 ->addAttributeToSelect('*');
 
-        $jsonTab = array();
-        $csvTxt = "";        
+        $jsonTab = array();      
 
         foreach ($collection as $customer) {
 
@@ -297,49 +266,22 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                             $tabProduct["product_id"] = $item->getProductId();
                             $tabProduct["price"] = $prod->getPrice();
                             $tabProduct["quantity"] = $item->getQtyToShip();
-                            if ($format == "csv") {
-                                $tabOrder["products"][] = implode("/", $tabProduct);
-                            }
-                            else if ($format == "json") {
-                                $tabOrder["products"][] = $tabProduct;
-                            }
+                            $tabOrder["products"][] = $tabProduct;
                     }
-                    if ($format == "csv") {
-                        $tabOrders[] = implode("|", $tabOrder);
-                    }
-                    else if ($format == "json") {
-                        $tabOrders[] = $tabOrder;
-                    }
+                    $tabOrders[] = $tabOrder;
                 }
             }
 
             if (!empty($tabOrders)) {
-                if ($format == "csv") {
-                    $tabRes = array(
-                        $customer->getId(),
-                        $customer->getEmail(),
-                        $customer->getLastName(),
-                        $customer->getFirstName(),
-                        implode(",", $tabOrders)
-                    );
-                    $csvTxt .= implode(";", $tabRes) . "\n";
-                } else if ($format == "json") {
-                    $jsonTab[] = array("user_id" => $customer->getId(),
-                        "email" => $customer->getEmail(),
-                        "last_name" => $customer->getLastName(),
-                        "first_name" => $customer->getFirstName(),
-                        "orders" => $tabOrders
-                    );
-                }
+                $jsonTab[] = array("user_id" => $customer->getId(),
+                    "email" => $customer->getEmail(),
+                    "last_name" => $customer->getLastName(),
+                    "first_name" => $customer->getFirstName(),
+                    "orders" => $tabOrders
+                );
             }
         }
-
-        if ($format == "csv") {
-            return Mage::helper("datarec_exporter/data")->save_file($file, $csvTxt, $format);
-        }
-        else if ($format == "json" && !empty($jsonTab)) {
-            return Mage::helper("datarec_exporter/data")->save_file($file, $jsonTab, $format);
-        }
+        return Mage::helper("datarec_exporter/data")->save_file($file, $jsonTab, 'json');
     }
 
 }
