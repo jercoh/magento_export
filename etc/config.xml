@@ -2,33 +2,38 @@
 <config>
 
     <modules>
-        <Beautyst_Exporter>
+        <Datarec_Exporter>
             <version>1.0.0</version>
-        </Beautyst_Exporter>
+        </Datarec_Exporter>
     </modules>
 
     <global>
+        <models>
+            <datarec_exporter>
+                <class>Datarec_Exporter_Model</class>
+            </datarec_exporter>
+        </models>
         <helpers>
-            <exporter>
-                <class>Beautyst_Exporter_Helper</class>
-            </exporter>
+            <datarec_exporter>
+                <class>Datarec_Exporter_Helper</class>
+            </datarec_exporter>
         </helpers>
         <blocks>
-            <exporter>
-                <class>Beautyst_Exporter_Block</class>
-            </exporter>
+            <datarec_exporter>
+                <class>Datarec_Exporter_Block</class>
+            </datarec_exporter>
         </blocks>          
     </global>
     
     <frontend>
          <routers>
-             <beautyst_exporter>
+             <datarec_exporter>
                  <use>standard</use>
                  <args>
-                     <module>Beautyst_Exporter</module>
-                     <frontName>exporter</frontName>
+                     <module>Datarec_Exporter</module>
+                     <frontName>datarec_exporter</frontName>
                  </args>
-             </beautyst_exporter>
+             </datarec_exporter>
          </routers>
      </frontend>    
     

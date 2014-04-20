@@ -1,6 +1,6 @@
 <?php
 
-class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Action {
+class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action {
 
     public function indexAction() {
         set_time_limit(0);
@@ -14,24 +14,24 @@ class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Actio
 
         //File path
         $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . 'lengow.csv';
+        $file = $path . DS . 'Datarec.csv';
 
         //Cache
         if ((file_exists($file) && (time() - filemtime($file)) < (60 * 60 * 24)) && !$forcegeneration) {
-            error_log("Lengow export -> cache file served");
+            error_log("Datarec export -> cache file served");
             $content = array(
                 'type' => 'filename',
                 'value' => $file,
                 'rm' => false //keep as cache (if necessary)
             );
         } else {
-            error_log("Lengow export -> creating new file for export");
+            error_log("Datarec export -> creating new file for export");
             if (file_exists($file))
                 unlink($file);
-            $content = Mage::helper('exporter')->generateCsvList();
+            $content = Mage::getModel('datarec_exporter/resource')->generateCsvList();
         }
 
-        $filename = "lengow.csv";
+        $filename = "Datarec.csv";
         $this->_prepareDownloadResponse($filename, $content);
     }
 
@@ -66,13 +66,13 @@ class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Actio
     }
 
     public function get_content_by_type($action, $type, $format) {
-        $helper = Mage::helper("exporter");
+        $model = Mage::model("datarec_exporter");
         if ($action == "liked") {
-            return $helper->exportLiked($type, $format);
+            return $model->exportLiked($type, $format);
         } else if ($action == "viewed") {
-            return $helper->exportViewed($type, $format);
+            return $model->exportViewed($type, $format);
         } else if ($action == "ordered") {
-            return $helper->exportOrdered($format);
+            return $model->exportOrdered($format);
         }
     }
 
@@ -125,26 +125,6 @@ class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Actio
         }
     }
 
-    // public function orderedAction() {
-    //     //only for products so no params required
-    //     //format: json/csv
-
-    //     set_time_limit(0);
-    //     ini_set('memory_limit', '4096M');
-    //     $helper = Mage::helper("exporter");
-
-    //     $format = (isset($_GET["format"]) && $_GET["format"] != "") ? $_GET["format"] : "csv";
-    //     $type = "produits";
-    //     $forcegen = (isset($_GET["forcegen"]) && $_GET["forcegen"] == "true");
-
-    //     if ($format == "csv" || $format == "json") {
-    //         echo $this->get_content("ordered", $type, $format, $forcegen);
-    //         die;
-    //     } else {
-    //         die("Erreur...");
-    //     }
-    // }
-
     public function orderedAction() {
         set_time_limit(0);
         ini_set('memory_limit', '4096M');
@@ -168,10 +148,10 @@ class Beautyst_Exporter_IndexController extends Mage_Core_Controller_Front_Actio
                 'rm' => false //keep as cache (if necessary)
             );
         } else {
-            error_log("Lengow export -> creating new file for export");
+            error_log("Datarec export -> creating new file for export");
             if (file_exists($file))
                 unlink($file);
-            $content = Mage::helper('exporter')->exportOrdered($format);
+            $content = Mage::getModel('datarec_exporter/resource')->exportOrdered($format);
         }
 
         $filename = 'orders.'.$format;
