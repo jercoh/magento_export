@@ -52,7 +52,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
             "ean",
             "provider",
             "shade",
-            "shade_image"//Avec url magento devant
+            "shade_image",//Avec url magento devant
+            "total_sales"
         );
 
         if (!is_null($this->_list)) {
@@ -82,6 +83,12 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                         }
                     }
 
+                    $productCollection = Mage::getResourceModel('reports/product_collection')
+                        ->addOrderedQty()
+                        ->addAttributeToFilter('sku', $product->getData('sku'))
+                        ->setOrder('ordered_qty', 'desc')
+                        ->getFirstItem();
+
                     foreach ($fields as $attr) {
                         //Special cases first (manufacturer, stock/qty, url, image, FDP...)
                         if ($attr == "manufacturer")
@@ -104,6 +111,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                                 $productJson[$attr] = "non";
                         else if ($attr == "url")
                             $productJson[$attr] = $product->getProductUrl();
+                        else if ($attr == "total_sales")
+                            $productJson[$attr] = (int)$productCollection->ordered_qty;
                         else
                             $productJson[$attr] = preg_replace('/\r\n/', ' ', str_replace("|", "", trim(htmlentities(strip_tags($product->getData($attr))))));
                     }
@@ -236,7 +245,6 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
 
         $collection = Mage::getModel('customer/customer')
                 ->getCollection()
-                ->setPage(1,4)
                 ->addAttributeToSelect('*');
 
         $jsonTab = array();      
@@ -261,12 +269,13 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                     $items = $order->getAllItems();
                     foreach ($items as $item) {
                         $prod = Mage::getModel('catalog/product')->load($item->getProductId());
-                        if ($prod->getStatus() === "1")
+                        if ($prod->getStatus() == 1){
                             $tabProduct = array();
                             $tabProduct["product_id"] = $item->getProductId();
                             $tabProduct["price"] = $prod->getPrice();
                             $tabProduct["quantity"] = $item->getQtyToShip();
                             $tabOrder["products"][] = $tabProduct;
+                        }
                     }
                     $tabOrders[] = $tabOrder;
                 }
