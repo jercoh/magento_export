@@ -69,11 +69,7 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
         $model = Mage::model("datarec_exporter");
         if ($action == "liked") {
             return $model->exportLiked($type, $format);
-        } else if ($action == "viewed") {
-            return $model->exportViewed($type, $format);
-        } else if ($action == "ordered") {
-            return $model->exportOrdered($format);
-        }
+        } 
     }
 
     public function get_content($action, $type, $format, $forcegen) {
@@ -106,26 +102,7 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
         }
     }
 
-    public function viewedAction() {
-        //params: type of content (only works with products for now)
-        //format: json/csv
-
-        set_time_limit(0);
-        ini_set('memory_limit', '4096M');
-
-        $type = (isset($_GET["type"]) && $_GET["type"] != "") ? $_GET["type"] : "produits";
-        $format = (isset($_GET["format"]) && $_GET["format"] != "") ? $_GET["format"] : "csv";
-        $forcegen = (isset($_GET["forcegen"]) && $_GET["forcegen"] == "true");
-
-        if ($type != "" && ($format == "csv" || $format == "json")) {
-            echo $this->get_content("viewed", $type, $format, $forcegen);
-            die;
-        } else {
-            die("Erreur...");
-        }
-    }
-
-    public function orderedAction() {
+    public function ordersAction() {
         set_time_limit(0);
         ini_set('memory_limit', '4096M');
 
@@ -136,7 +113,7 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
         }
         //File path
         $path = Mage::getBaseDir('media') . DS . 'export' . DS;
-        $file = $path . DS . 'datarec_orders.json';
+        $file = $path . DS . 'datarec_orders_and_views.json';
 
         //Cache
         if ((file_exists($file) && (time() - filemtime($file)) < (60 * 60 * 24)) && !$forcegeneration) {
@@ -150,10 +127,10 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
             error_log("Datarec export -> creating new file for export");
             if (file_exists($file))
                 unlink($file);
-            $content = Mage::getModel('datarec_exporter/resource')->exportOrdered();
+            $content = Mage::getModel('datarec_exporter/resource')->exportViewsAndPurchase();
         }
 
-        $filename = 'datarec_orders.json';
+        $filename = 'datarec_orders_and_views.json';
         $this->_prepareDownloadResponse($filename, $content);
     }
 }

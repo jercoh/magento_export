@@ -42,4 +42,35 @@ class Datarec_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
         return $readConnection->fetchAll($query);
     }
 
+    function controllerExportData($filename, $exportfunction) {
+        set_time_limit(0);
+        ini_set('memory_limit', '4096M');
+
+        //GET params
+        $forcegeneration = 0;
+        if (isset($_GET["forcegen"]) && $_GET["forcegen"] == "true") {
+            $forcegeneration = 1;
+        }
+        //File path
+        $path = Mage::getBaseDir('media') . DS . 'export' . DS;
+        $file = $path . DS . $filename . '.json';
+
+        //Cache
+        if ((file_exists($file) && (time() - filemtime($file)) < (60 * 60 * 24)) && !$forcegeneration) {
+            error_log("Export -> cache file served");
+            $content = array(
+                'type' => 'filename',
+                'value' => $file,
+                'rm' => false //keep as cache (if necessary)
+            );
+        } else {
+            error_log("Datarec export -> creating new file for export");
+            if (file_exists($file))
+                unlink($file);
+            $content = Mage::getModel('datarec_exporter/resource')->$exportfunction();
+        }
+
+        $this->_prepareDownloadResponse($filename . '.json', $content);
+    }
+
 }

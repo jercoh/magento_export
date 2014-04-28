@@ -38,6 +38,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         //Fields
         $fields = array(
             "id",
+            "created_at",
             "sku",
             "manufacturer", //brand
             "name",
@@ -95,6 +96,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                             $productJson[$attr] = $product->getAttributeText('brand_id');
                         else if ($attr == "category")
                             $productJson[$attr] = implode(", ", $strCats);
+                        else if ($attr == "created_at")
+                            $productJson[$attr] =  $product->getCreatedAt();
                         else if ($attr == "id")
                             $productJson[$attr] = $product->getId();
                         else if ($attr == "capacity" || $attr == "provider")
@@ -124,7 +127,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         }
     }
 
-    function exportLiked($type, $format = "csv") {
+    function exportLiked($type) {
         //Get liked content
         //Get all users
         //Filter by type (+ get magento id for the products)
@@ -134,7 +137,6 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         $tabusers = Mage::helper("datarec_exporter/data")->get_query('select ID, user_email from wp_users where 1;');
 
         $jsonTab = array();
-        $csvTxt = "";
 
         foreach ($tabusers as $user) {
 
@@ -159,88 +161,23 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                     }
                 }
 
-                if ($format == "csv") {
-                    $tabRes = array(
-                        $user["ID"],
-                        $user["user_email"],
-                        $user["user_lastname"],
-                        $user["user_firstname"],
-                        implode("|", $list)
-                    );
-                    $csvTxt .= implode(";", $tabRes) . "\n";
-                } else if ($format == "json") {
-                    $jsonTab[] = array(
-                        "user_id" => $user["ID"],
-                        "email" => $use["user_email"],
-                        "last_name" => $user["user_lastname"],
-                        "first_name" => $user["user_firstname"],
-                        "views" => $list
-                    );
-                }
+
+                $jsonTab[] = array(
+                    "user_id" => $user["ID"],
+                    "email" => $use["user_email"],
+                    "last_name" => $user["user_lastname"],
+                    "first_name" => $user["user_firstname"],
+                    "likes" => $list
+                );
             }
         }
 
-        //Return
-        if ($format == "csv") {
-            return $csvTxt;
-        } else if ($format == "json") {
-            return json_encode($jsonTab);
-        }
+        return Mage::helper("datarec_exporter/data")->save_file($file, $jsonTab, 'json');
     }
 
-    function exportViewed($type = "produits", $format = "csv") {
-
-        $collection = Mage::getModel('customer/customer')
-                ->getCollection()
-                ->addAttributeToSelect('*');
-
-        $jsonTab = array();
-        $csvTxt = "";
-
-        foreach ($collection as $customer) {
-
-            $query = 'SELECT distinct(product_id)  FROM `report_viewed_product_index` WHERE `customer_id` = "' . $customer->getId() . '";';
-            $tabViews = Mage::helper("datarec_exporter/data")->get_query($query);
-            $list = array();
-
-            foreach ($tabViews as $view) {
-                $prod = Mage::getModel('catalog/product')->load($view["product_id"]);
-                if ($prod->getStatus() === "1")
-                    $list[] = $view["product_id"];
-            }
-
-            if (!empty($list)) {
-                if ($format == "csv") {
-                    $tabRes = array(
-                        $customer->getId(),
-                        $customer->getEmail(),
-                        $customer->getLastName(),
-                        $customer->getFirstName(),
-                        implode("|", $list)
-                    );
-                    $csvTxt .= implode(";", $tabRes) . "\n";
-                } else if ($format == "json") {
-                    $jsonTab[] = array(
-                        "user_id" => $customer->getId(),
-                        "email" => $customer->getEmail(),
-                        "last_name" => $customer->getLastName(),
-                        "first_name" => $customer->getFirstName(),
-                        "views" => $list
-                    );
-                }
-            }
-        }
-
-        if ($format == "csv") {
-            return $csvTxt;
-        } else if ($format == "json") {
-            return json_encode($jsonTab);
-        }
-    }
-
-    function exportOrdered() {
+    function exportViewsAndPurchase() {
         // File Creation///////
-        $file = Mage::helper("datarec_exporter/data")->create_file("orders", 'json');
+        $file = Mage::helper("datarec_exporter/data")->create_file("datarec_orders_and_views", 'json');
         ///////////////////////
 
         $collection = Mage::getModel('customer/customer')
@@ -259,7 +196,19 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                     ->addFieldToFilter('customer_id', array('eq' => array($customer->getId())));
             ;
 
+            $query = 'SELECT distinct(product_id)  FROM `report_viewed_product_index` WHERE `customer_id` = "' . $customer->getId() . '";';
+            $views = Mage::helper("datarec_exporter/data")->get_query($query);
+            
+            $tabViews = array();
             $tabOrders = array();
+
+            if(! empty($views)){
+                foreach ($views as $view) {
+                    $prod = Mage::getModel('catalog/product')->load($view["product_id"]);
+                    if ($prod->getStatus() === "1")
+                        $tabViews[] = $view["product_id"];
+                }
+            }
 
             if(! empty($orders)){
                 foreach ($orders as $order) {
@@ -286,7 +235,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                     "email" => $customer->getEmail(),
                     "last_name" => $customer->getLastName(),
                     "first_name" => $customer->getFirstName(),
-                    "orders" => $tabOrders
+                    "orders" => $tabOrders,
+                    "views" => $tabViews
                 );
             }
         }
