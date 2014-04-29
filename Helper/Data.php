@@ -70,7 +70,7 @@ class Datarec_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
             $content = Mage::getModel('datarec_exporter/resource')->$exportfunction();
         }
 
-        $this->_prepareDownloadResponse($filename . '.json', $content);
+        return $content;
     }
 
 }
