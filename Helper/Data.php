@@ -67,7 +67,12 @@ class Datarec_Exporter_Helper_Data extends Mage_Core_Helper_Abstract {
             error_log("Datarec export -> creating new file for export");
             if (file_exists($file))
                 unlink($file);
-            $content = Mage::getModel('datarec_exporter/resource')->$exportfunction();
+            if ($exportfunction == 'exportLikes'){
+                $content = Mage::getModel('datarec_exporter/resource')->$exportfunction($_GET["type"]);
+            }
+            else {
+                $content = Mage::getModel('datarec_exporter/resource')->$exportfunction();
+            }
         }
 
         return $content;

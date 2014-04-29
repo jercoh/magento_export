@@ -127,20 +127,24 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         }
     }
 
-    function exportLiked($type) {
+    function exportLikes($type) {
+        // File Creation///////
+        $file = Mage::helper("datarec_exporter/data")->create_file("datarec_likes_".$type, 'json');
+        ///////////////////////
+
         //Get liked content
         //Get all users
         //Filter by type (+ get magento id for the products)
         if ($type == "")
             die("Spécifier un type de produits");
 
-        $tabusers = Mage::helper("datarec_exporter/data")->get_query('select ID, user_email from wp_users where 1;');
+        $users = Mage::helper("datarec_exporter/data")->get_query('select ID, user_email from wp_users where 1;');
 
         $jsonTab = array();
 
-        foreach ($tabusers as $user) {
+        foreach ($users as $user) {
 
-            if ($type == "produits")
+            if ($type == "products")
                 $query = 'SELECT m.meta_value as postid from `clrz_likes` c INNER JOIN wp_posts w ON (c.post_id = w.ID) LEFT JOIN wp_postmeta m ON (c.post_id = m.post_id AND m.meta_key="magento_id") WHERE w.post_type = "' . $type . '" AND c.user_id = "' . $user["ID"] . '" AND w.post_status="publish";';
             else
                 $query = 'SELECT w.ID as postid from `clrz_likes` c INNER JOIN wp_posts w ON (c.post_id = w.ID) WHERE w.post_type = "' . $type . '" AND c.user_id = "' . $user["ID"] . '" AND w.post_status="publish";';
@@ -151,7 +155,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                 $list = array();
                 foreach ($tablikes as $l) {
                     if (isset($l["postid"]) && $l["postid"] != "") {
-                        if ($type == "produits") {
+                        if ($type == "products") {
                             $prod = Mage::getModel('catalog/product')->load($l["postid"]);
                             if ($prod->getStatus() === "1")
                                 $list[] = $l["postid"];
@@ -175,9 +179,47 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         return Mage::helper("datarec_exporter/data")->save_file($file, $jsonTab, 'json');
     }
 
-    function exportViewsAndPurchase() {
+    function exportViews(){
         // File Creation///////
-        $file = Mage::helper("datarec_exporter/data")->create_file("datarec_orders_and_views", 'json');
+        $file = Mage::helper("datarec_exporter/data")->create_file("datarec_views", 'json');
+        ///////////////////////
+
+        $collection = Mage::getModel('customer/customer')
+                ->getCollection()
+                ->addAttributeToSelect('*');
+
+        $jsonTab = array();
+
+        foreach ($collection as $customer) {
+            $query = 'SELECT distinct(product_id)  FROM `report_viewed_product_index` WHERE `customer_id` = "' . $customer->getId() . '";';
+            $views = Mage::helper("datarec_exporter/data")->get_query($query);
+            $tabViews = array();
+           
+            if(! empty($views)){
+                foreach ($views as $view) {
+                    $prod = Mage::getModel('catalog/product')->load($view["product_id"]);
+                    if ($prod->getStatus() === "1")
+                        $tabViews[] = $view["product_id"];
+                }
+            }
+
+            unset($views);
+
+            if (!empty($tabViews)) {
+                $jsonTab[] = array("user_id" => $customer->getId(),
+                    "email" => $customer->getEmail(),
+                    "last_name" => $customer->getLastName(),
+                    "first_name" => $customer->getFirstName(),
+                    "views" => $tabViews
+                );
+            }
+        }
+        return Mage::helper("datarec_exporter/data")->save_file($file, $jsonTab, 'json');
+    }
+
+    function exportPurchases() {
+        // File Creation///////
+        $file = Mage::helper("datarec_exporter/data")->create_file("datarec_orders", 'json');
         ///////////////////////
 
         $collection = Mage::getModel('customer/customer')
@@ -195,22 +237,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                     ->addFieldToFilter('status', 'complete')
                     ->addFieldToFilter('customer_id', array('eq' => array($customer->getId())));
             ;
-
-            $query = 'SELECT distinct(product_id)  FROM `report_viewed_product_index` WHERE `customer_id` = "' . $customer->getId() . '";';
-            $views = Mage::helper("datarec_exporter/data")->get_query($query);
-            
-            $tabViews = array();
             $tabOrders = array();
-
-            if(! empty($views)){
-                foreach ($views as $view) {
-                    $prod = Mage::getModel('catalog/product')->load($view["product_id"]);
-                    if ($prod->getStatus() === "1")
-                        $tabViews[] = $view["product_id"];
-                }
-            }
-
-            unset($views);
 
             if(! empty($orders)){
                 foreach ($orders as $order) {
@@ -239,8 +266,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                     "email" => $customer->getEmail(),
                     "last_name" => $customer->getLastName(),
                     "first_name" => $customer->getFirstName(),
-                    "orders" => $tabOrders,
-                    "views" => $tabViews
+                    "orders" => $tabOrders
                 );
             }
         }
