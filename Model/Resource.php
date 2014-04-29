@@ -232,6 +232,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                 }
             }
 
+            unset($orders);
+
             if (!empty($tabOrders)) {
                 $jsonTab[] = array("user_id" => $customer->getId(),
                     "email" => $customer->getEmail(),
