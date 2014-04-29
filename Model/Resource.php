@@ -138,7 +138,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         if ($type == "")
             die("Spécifier un type de produits");
 
-        $users = Mage::helper("datarec_exporter/data")->get_query('select ID, user_email from wp_users where 1;');
+        $users = Mage::helper("datarec_exporter/data")->get_query('select ID, user_email, display_name from wp_users where 1;');
 
         $jsonTab = array();
 
@@ -169,8 +169,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                 $jsonTab[] = array(
                     "user_id" => $user["ID"],
                     "email" => $user["user_email"],
-                    "last_name" => $user["user_lastname"],
-                    "first_name" => $user["user_firstname"],
+                    "display_name" => $user["display_name"]
                     "likes" => $list
                 );
             }

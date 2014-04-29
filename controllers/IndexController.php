@@ -76,7 +76,7 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
         $type = (isset($_GET["type"]) && $_GET["type"] != "") ? $_GET["type"] : "";
 
         if ($type != "" && in_array($_GET["type"], $allowedType)) {
-            $filename = 'datarec_likes'.$type;
+            $filename = 'datarec_likes_'.$type;
             $methodename = 'exportLikes';
             $content = Mage::helper("datarec_exporter/data")->controllerExportData($filename, $methodename);
             $this->_prepareDownloadResponse($filename . '.json', $content);
