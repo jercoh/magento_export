@@ -210,6 +210,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                 }
             }
 
+            unset($views);
+
             if(! empty($orders)){
                 foreach ($orders as $order) {
                     $tabOrder = array();
