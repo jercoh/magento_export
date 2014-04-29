@@ -168,7 +168,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
 
                 $jsonTab[] = array(
                     "user_id" => $user["ID"],
-                    "email" => $use["user_email"],
+                    "email" => $user["user_email"],
                     "last_name" => $user["user_lastname"],
                     "first_name" => $user["user_firstname"],
                     "likes" => $list
