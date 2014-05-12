@@ -241,8 +241,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
             if (!empty($tabViews)) {
                 $jsonTab[] = array("id" => $customer->getId(),
                     "email" => $customer->getEmail(),
-                    "last_name" => $customer->getLastName(),
-                    "first_name" => $customer->getFirstName(),
+                    "last_name" => $customer->getLastname(),
+                    "first_name" => $customer->getFirstname(),
                     "views" => $tabViews
                 );
             }
@@ -297,9 +297,9 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
             if (!empty($tabOrders)) {
                 $jsonTab[] = array("id" => $customer->getId(),
                     "email" => $customer->getEmail(),
-                    "last_name" => $customer->getLastName(),
-                    "first_name" => $customer->getFirstName(),
-                    "orders" => $tabOrders
+                    "last_name" => $customer->getLastname(),
+                    "first_name" => $customer->getFirstname(),
+                    "purchases" => $tabOrders
                 );
             }
         }
