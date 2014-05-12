@@ -49,7 +49,7 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
     //     }
     // }
 
-    public function indexAction() {
+    public function productsAction() {
         $filename = 'datarec_products';
         $methodename = 'exportProducts';
         $content = Mage::helper("datarec_exporter/data")->controllerExportData($filename, $methodename);
@@ -63,7 +63,7 @@ class Datarec_Exporter_IndexController extends Mage_Core_Controller_Front_Action
         $this->_prepareDownloadResponse($filename . '.json', $content);
     }
 
-    public function ordersAction() {
+    public function purchasesAction() {
         $filename = 'datarec_orders';
         $methodename = 'exportPurchases';
         $content = Mage::helper("datarec_exporter/data")->controllerExportData($filename, $methodename);

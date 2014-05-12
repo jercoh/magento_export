@@ -145,7 +145,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         if (!empty($tabPosts)) {
             foreach ($tabPosts as $post) {
                 $jsonTab[] = array(
-                    "post_id" => $post["ID"],
+                    "id" => $post["ID"],
                     "created_at" => $post["post_date"],
                     "type" => $type,
                     "title" => $post["post_title"],
@@ -201,7 +201,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
 
 
                 $jsonTab[] = array(
-                    "user_id" => $user["ID"],
+                    "id" => $user["ID"],
                     "email" => $user["user_email"],
                     "display_name" => $user["display_name"],
                     "likes_".$type => $list
@@ -239,7 +239,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
             unset($views);
 
             if (!empty($tabViews)) {
-                $jsonTab[] = array("user_id" => $customer->getId(),
+                $jsonTab[] = array("id" => $customer->getId(),
                     "email" => $customer->getEmail(),
                     "last_name" => $customer->getLastName(),
                     "first_name" => $customer->getFirstName(),
@@ -282,7 +282,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
                         $prod = Mage::getModel('catalog/product')->load($item->getProductId());
                         if ($prod->getStatus() == 1){
                             $tabProduct = array();
-                            $tabProduct["product_id"] = $item->getProductId();
+                            $tabProduct["id"] = $item->getProductId();
                             $tabProduct["price"] = $prod->getPrice();
                             $tabProduct["quantity"] = $item->getQtyToShip();
                             $tabOrder["products"][] = $tabProduct;
@@ -295,7 +295,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
             unset($orders);
 
             if (!empty($tabOrders)) {
-                $jsonTab[] = array("user_id" => $customer->getId(),
+                $jsonTab[] = array("id" => $customer->getId(),
                     "email" => $customer->getEmail(),
                     "last_name" => $customer->getLastName(),
                     "first_name" => $customer->getFirstName(),
