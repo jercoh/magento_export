@@ -127,6 +127,11 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         }
     }
 
+    function exportPosts($type) {
+        // TO-DO
+        // data: post_date(wp_posts), clrz_likes(wp_clrz_posts_metamorphoz), post_title(wp_posts), meta_value(wp_postmeta), guid(wp_posts), post_content(wp_posts)
+    }
+
     function exportLikes($type) {
         // File Creation///////
         $file = Mage::helper("datarec_exporter/data")->create_file("datarec_likes_".$type, 'json');
