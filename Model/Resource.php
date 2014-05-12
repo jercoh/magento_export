@@ -130,6 +130,35 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
     function exportPosts($type) {
         // TO-DO
         // data: post_date(wp_posts), clrz_likes(wp_clrz_posts_metamorphoz), post_title(wp_posts), meta_value(wp_postmeta), guid(wp_posts), post_content(wp_posts)
+        // File Creation///////
+        $file = Mage::helper("datarec_exporter/data")->create_file("datarec_posts_".$type, 'json');
+        ///////////////////////
+        if ($type == "")
+            die("Spécifier un type de contenu");
+
+        $jsonTab = array();
+
+        $query = 'SELECT post1.ID, post1.post_date, post1.post_title, post1.guid, post1.post_content, post2._clrz_likes, post3.meta_value from `wp_posts` as post1, `wp_clrz_posts_metamorphoz` as post2, `wp_postmeta` as post3 WHERE post1.post_type = "' . $type . '" AND post1.post_status="publish" AND post3.meta_key = "_clrz_get_post_thumb_t357x238" AND post1.ID=post2.post_id AND post2.post_id=post3.post_id;';
+        
+        $tabPosts = Mage::helper("datarec_exporter/data")->get_query($query);
+
+        if (!empty($tabPosts)) {
+            foreach ($tabPosts as $post) {
+                $jsonTab[] = array(
+                    "post_id" => $post["ID"],
+                    "created_at" => $post["post_date"],
+                    "type" => $type,
+                    "title" => $post["post_title"],
+                    "url" => $post["guid"],
+                    "content" => $post["post_content"],
+                    "likes" => $post["_clrz_likes"],
+                    "img" => $post["meta_value"]
+                );
+            }
+        }
+
+        return Mage::helper("datarec_exporter/data")->save_file($file, $jsonTab, 'json');
+
     }
 
     function exportLikes($type) {
@@ -141,7 +170,7 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
         //Get all users
         //Filter by type (+ get magento id for the products)
         if ($type == "")
-            die("Spécifier un type de produits");
+            die("Spécifier un type de contenu");
 
         $users = Mage::helper("datarec_exporter/data")->get_query('select ID, user_email, display_name from wp_users where 1;');
 
