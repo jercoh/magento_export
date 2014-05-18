@@ -15,7 +15,8 @@ class Datarec_Exporter_Model_Resource extends Mage_Core_Model_Abstract {
     public function initProductExport() {
         $collection = Mage::getModel('catalog/product')->getCollection()
                 ->addAttributeToSelect('*')
-                ->addFieldToFilter('status', 1);
+                ->addFieldToFilter('status', 1)
+                ->addAttributeToFilter('price', array('gt' => 0.00));
         $this->setList($collection);
     }
 
